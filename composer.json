@@ -1,0 +1,40 @@
+{
+  "name": "esn-cy/omnia-dev",
+  "type": "library",
+  "description": "Development environment utilities for Omnia Drupal modules.",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/esn-cy/omnia-dev",
+  "readme": "README.md",
+  "support": {
+    "email": "wpa@esncy.org",
+    "issues": "https://github.com/esn-cy/omnia-dev/issues"
+  },
+  "authors": [
+    {
+      "name": "Andreas Michael",
+      "email": "ateasm03@gmail.com",
+      "role": "Developer"
+    }
+  ],
+  "bin": [
+    "bin/omnia-dev"
+  ],
+  "autoload": {
+    "psr-4": {
+      "Drupal\\omnia_dev\\": "src/"
+    }
+  },
+  "require": {
+    "php": "^8.3 || ^8.4 || ^8.5",
+    "composer/composer": "^2",
+    "symfony/console": "^6.0 || ^7.0",
+    "symfony/process": "^6.0 || ^7.0",
+    "symfony/filesystem": "^6.0 || ^7.0",
+    "symfony/yaml": "^6.0 || ^7.0"
+  },
+  "config": {
+    "sort-packages": true
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}
