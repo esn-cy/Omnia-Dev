@@ -166,6 +166,10 @@ class InitCommand extends Command
             $extraPackages[] = 'drush/drush:^13';
         }
 
+        if (!isset($composerDeps['consolidation/robo'])) {
+            $extraPackages[] = 'consolidation/robo:^5.1 <5.2.0 || ^5.2.4';
+        }
+
         // Add any contrib Drupal dependencies declared in *.info.yml
         $drupalDeps = $detector->getDrupalDependencies();
         foreach ($drupalDeps as $depModule) {

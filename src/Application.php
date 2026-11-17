@@ -15,8 +15,10 @@ class Application extends BaseApplication
     {
         parent::__construct('Omnia Developer Utilities', self::VERSION);
 
-        $this->addCommand(new InitCommand());
-        $this->addCommand(new LinkCommand());
-        $this->addCommand(new UliCommand());
+        $this->addCommands([
+            new InitCommand(),
+            new LinkCommand(),
+            new UliCommand(),
+        ]);
     }
 }

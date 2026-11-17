@@ -125,7 +125,7 @@ class SatelliteInstaller
             return true;
         }
 
-        $command = array_merge(['composer', 'require', '--no-interaction'], $packages);
+        $command = array_merge(['composer', 'require', '--with-all-dependencies', '--no-interaction'], $packages);
         $process = new Process($command, $this->envPath);
         $process->setTimeout(600);
         $process->run($outputCallback);
