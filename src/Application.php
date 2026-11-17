@@ -2,6 +2,7 @@
 
 namespace Drupal\omnia_dev;
 
+use Drupal\omnia_dev\Command\DbCommand;
 use Drupal\omnia_dev\Command\InitCommand;
 use Drupal\omnia_dev\Command\LinkCommand;
 use Drupal\omnia_dev\Command\UliCommand;
@@ -16,6 +17,7 @@ class Application extends BaseApplication
         parent::__construct('Omnia Developer Utilities', self::VERSION);
 
         $this->addCommands([
+            new DbCommand(),
             new InitCommand(),
             new LinkCommand(),
             new UliCommand(),

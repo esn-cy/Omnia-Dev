@@ -2,8 +2,10 @@
 
 namespace Drupal\omnia_dev\Command;
 
+use DOMException;
 use Drupal\omnia_dev\Service\DdevManager;
 use Drupal\omnia_dev\Service\GitManager;
+use Drupal\omnia_dev\Service\JetBrainsManager;
 use Drupal\omnia_dev\Service\ModuleDetector;
 use Drupal\omnia_dev\Service\SatelliteInstaller;
 use Drupal\omnia_dev\Service\SymlinkManager;
@@ -31,9 +33,13 @@ class InitCommand extends Command
             ->addOption('account-name', null, InputOption::VALUE_OPTIONAL, 'Admin user account name', 'admin')
             ->addOption('account-pass', null, InputOption::VALUE_OPTIONAL, 'Admin user password', 'admin')
             ->addOption('skip-install', null, InputOption::VALUE_NONE, 'Skip running drush site:install')
+            ->addOption('skip-ide', null, InputOption::VALUE_NONE, 'Skip configuring JetBrains IDE database connection')
             ->addOption('force', 'f', InputOption::VALUE_NONE, 'Force recreate environment if directory exists');
     }
 
+    /**
+     * @throws DOMException
+     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
@@ -217,6 +223,15 @@ class InitCommand extends Command
         }
         $io->success('DDEV started successfully.');
 
+        $dbConnection = null;
+        if (!$input->getOption('skip-ide')) {
+            $jetbrains = new JetBrainsManager($cwd, $ddev);
+            $dbConnection = $jetbrains->configureDatabase();
+            if ($dbConnection !== null) {
+                $io->success(sprintf('JetBrains database connection "%s" configured (127.0.0.1:%d).', $dbConnection['data_source_name'], $dbConnection['port']));
+            }
+        }
+
         // 5. Site Install & Enable Module
         if (!$input->getOption('skip-install')) {
             $io->section('5/5 Installing Drupal with Satellite Profile & Enabling Module');
@@ -264,6 +279,7 @@ class InitCommand extends Command
             ['Admin Login' => $ddev->getUli() ?? ($ddev->getPrimaryUrl() . '/user/login')],
             ['Credentials' => sprintf('%s / %s', $input->getOption('account-name'), $input->getOption('account-pass'))],
             ['Test Environment' => $envPath],
+            ['JetBrains DB' => isset($dbConnection) ? sprintf('%s (127.0.0.1:%d)', $dbConnection['data_source_name'], $dbConnection['port']) : 'Skipped / Not configured'],
             ['Drush Command' => sprintf('cd %s && ddev drush [cmd]', $dirName)]
         );
 

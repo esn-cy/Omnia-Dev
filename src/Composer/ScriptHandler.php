@@ -48,4 +48,17 @@ class ScriptHandler
         $output = new ConsoleOutput();
         return $app->run($input, $output);
     }
+
+    /**
+     * Composer script hook for 'dev:db'.
+     * @noinspection PhpUnusedParameterInspection
+     * @throws Exception
+     */
+    public static function db(Event $event): int
+    {
+        $app = new Application();
+        $input = new ArrayInput(['command' => 'db']);
+        $output = new ConsoleOutput();
+        return $app->run($input, $output);
+    }
 }

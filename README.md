@@ -20,7 +20,9 @@ powered by **ESN Satellite 5**.
 - **Automated DDEV Configuration**:
     - Configures DDEV with `docroot: web` and PHP 8.3+.
     - Creates `.ddev/docker-compose.module.yaml` to mount your working module repository into the container.
-    - Automatically registers `post-start` hooks to ensure container symmetry.
+    - Automatically registers `post-start` hooks to ensure container symmetry and keep JetBrains DB connection ports in sync.
+- **Automated JetBrains Database Configuration**:
+    - Automatically creates and updates `.idea/dataSources.xml` and `.idea/dataSources.local.xml` with your DDEV database connection (`127.0.0.1:<port>/db`) so PhpStorm / DataGrip connects without manual setup or port mismatches.
 - **Automated Drupal & Satellite Installation**: Runs `drush site:install satellite`, enables your custom module, and
   prints a one-time admin login link.
 
@@ -56,6 +58,9 @@ Run the CLI binary from your module repository root:
 
 # Generate a one-time admin login link for the test environment
 ./vendor/bin/omnia-dev uli
+
+# Configure or refresh the JetBrains IDE database connection (.idea/dataSources.xml)
+./vendor/bin/omnia-dev db
 ```
 
 ### 2. Composer Scripts Integration
@@ -67,7 +72,8 @@ Add the script handlers to your module's `composer.json`:
   "scripts": {
     "dev:setup": "Drupal\\omnia_dev\\Composer\\ScriptHandler::setup",
     "dev:link": "Drupal\\omnia_dev\\Composer\\ScriptHandler::link",
-    "dev:uli": "Drupal\\omnia_dev\\Composer\\ScriptHandler::uli"
+    "dev:uli": "Drupal\\omnia_dev\\Composer\\ScriptHandler::uli",
+    "dev:db": "Drupal\\omnia_dev\\Composer\\ScriptHandler::db"
   }
 }
 ```
@@ -83,6 +89,9 @@ composer dev:uli
 
 # Refresh symlinks
 composer dev:link
+
+# Configure or refresh JetBrains IDE database connection
+composer dev:db
 ```
 
 ---

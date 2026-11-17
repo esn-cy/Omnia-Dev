@@ -101,9 +101,20 @@ class DdevManager
 
         $hookCommand = 'bash -c "ln -sfn /var/dev_module/src /var/www/src 2>/dev/null || true; ln -sfn /var/dev_module/assets /var/www/assets 2>/dev/null || true; for f in /var/dev_module/*.yml; do [ -f \"\$f\" ] && ln -sfn \"\$f\" /var/www/\$(basename \"\$f\"); done; true"';
 
+        $dirName = basename($this->envPath);
+        $fallbackBin = dirname(__DIR__, 2) . '/bin/omnia-dev';
+        $hostHookCommand = sprintf(
+            'bash -c "cd .. && if [ -x ./vendor/bin/omnia-dev ]; then ./vendor/bin/omnia-dev db --dir=%s --quiet || true; elif [ -x %s ]; then %s db --dir=%s --quiet || true; fi"',
+            escapeshellarg($dirName),
+            escapeshellarg($fallbackBin),
+            escapeshellarg($fallbackBin),
+            escapeshellarg($dirName)
+        );
+
         $config = Yaml::parseFile($configFile) ?? [];
         $config['hooks']['post-start'] = [
             ['exec' => $hookCommand],
+            ['exec-host' => $hostHookCommand],
         ];
 
         file_put_contents($configFile, Yaml::dump($config, 4, 2));
@@ -155,5 +166,67 @@ class DdevManager
     public function getPrimaryUrl(): string
     {
         return 'https://' . $this->getProjectName() . '.ddev.site';
+    }
+
+    /**
+     * Retrieves database connection details from `ddev describe -j`.
+     */
+    public function getDbInfo(): ?array
+    {
+        $process = new Process(['ddev', 'describe', '-j'], $this->envPath);
+        $process->setTimeout(30);
+        $process->run();
+
+        if (!$process->isSuccessful()) {
+            return null;
+        }
+
+        $stdout = trim($process->getOutput());
+        if ($stdout === '') {
+            return null;
+        }
+
+        $data = json_decode($stdout, true);
+        if (!is_array($data) || !isset($data['raw'])) {
+            $data = null;
+            $lines = preg_split('/\r\n|\r|\n/', $stdout) ?: [];
+            foreach (array_reverse($lines) as $line) {
+                $line = trim($line);
+                if ($line === '' || !str_starts_with($line, '{')) {
+                    continue;
+                }
+                $decoded = json_decode($line, true);
+                if (is_array($decoded) && isset($decoded['raw'])) {
+                    $data = $decoded;
+                    break;
+                }
+            }
+        }
+
+        $raw = $data['raw'] ?? null;
+        if (!is_array($raw)) {
+            return null;
+        }
+
+        $dbInfo = is_array($raw['dbinfo'] ?? null) ? $raw['dbinfo'] : [];
+        $publishedPort = (int) ($dbInfo['published_port'] ?? 0);
+        if ($publishedPort === 0) {
+            $publishedPort = (int) ($raw['services']['db']['host_ports_mapping'][0]['host_port'] ?? 0);
+        }
+
+        if ($publishedPort === 0) {
+            return null;
+        }
+
+        return [
+            'project_name' => (string) ($raw['name'] ?? $this->getProjectName()),
+            'host' => '127.0.0.1',
+            'port' => $publishedPort,
+            'dbname' => (string) ($dbInfo['dbname'] ?? 'db'),
+            'username' => (string) ($dbInfo['username'] ?? 'db'),
+            'password' => (string) ($dbInfo['password'] ?? 'db'),
+            'database_type' => (string) ($dbInfo['database_type'] ?? 'mariadb'),
+            'database_version' => (string) ($dbInfo['database_version'] ?? '11.8'),
+        ];
     }
 }
